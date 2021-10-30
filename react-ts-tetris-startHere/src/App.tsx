@@ -5,6 +5,7 @@ import { createStage, isColliding } from "./gameHelpers";
 import { useInterval } from "./hooks/useInterval";
 import { usePlayer } from "./hooks/usePlayer";
 import { useStage } from "./hooks/useStage";
+import { useGameStatus } from "./hooks/useGameStatus";
 
 // Components
 import Stage from "./components/Stage/Stage";
@@ -21,7 +22,8 @@ const App: React.FC = () => {
   const gameArea = useRef<HTMLDivElement>(null);
 
   const { player, updatePlayerPos, resetPlayer, playerRotate } = usePlayer();
-  const { stage, setStage } = useStage(player, resetPlayer);
+  const { stage, setStage, rowsCleared } = useStage(player, resetPlayer);
+  const { score, setScore, rows, setRows, level, setLevel} = useGameStatus(rowsCleared)
 
   const movePlayer = (dir: number) => {
     if (!isColliding(player, stage, { x: dir, y: 0 })) {
@@ -32,8 +34,10 @@ const App: React.FC = () => {
   const keyUp = ({ keyCode }: { keyCode: number }): void => {
     // Change the dropdown speed when user releases downarrow
     if (keyCode === 40) {
-      setDropTime(1000);
-    }
+      setDropTime(1000 - ( level * 100))
+      if(dropTime && dropTime < 100) {
+        setDropTime(100)
+      }    }
   };
 
   const move = ({
@@ -66,10 +70,23 @@ const App: React.FC = () => {
     setStage(createStage());
     setDropTime(1000);
     resetPlayer();
+    setScore(0)
+    setLevel(1)
+    setRows(0)
     setGameOver(false);
   };
 
   const drop = (): void => {
+// increase level after each 10 rows cleared
+    if(rows > level * 10) {
+      setLevel(prev => prev + 1)
+    }
+
+    setDropTime(1000 - ( level * 100))
+    if(dropTime && dropTime < 100) {
+      setDropTime(100)
+    }
+
     if (!isColliding(player, stage, { x: 0, y: 1 })) {
       updatePlayerPos({ x: 0, y: 1, collided: false });
     } else {
@@ -86,6 +103,8 @@ const App: React.FC = () => {
   useInterval(() => {
     drop();
   }, dropTime);
+
+  console.log(score, rows, level)
 
   return (
     <StyledTetrisWrapper
@@ -104,9 +123,9 @@ const App: React.FC = () => {
             </>
           ) : (
             <>
-              <Display text={`Score: `} />
-              <Display text={`Rows: `} />
-              <Display text={`Level: `} />
+              <Display text={`Score: ${score}`} />
+              <Display text={`Rows: ${rows}`} />
+              <Display text={`Level: ${level}`} />
             </>
           )}
         </div>

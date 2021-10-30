@@ -59,5 +59,5 @@ export const useStage = (player: player, resetPlayer: () => void) => {
 
   },[player.collided, player.pos?.x, player.pos?.y, player.tetromino])
 
-  return {stage, setStage}
+  return {stage, setStage, rowsCleared}
 }
